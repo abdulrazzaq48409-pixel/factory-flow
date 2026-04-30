@@ -1,26 +1,19 @@
-# Use an official PHP runtime as a parent image
-FROM php:8.1-fpm
+FROM php:8.2-cli
 
-# Set working directory
 WORKDIR /app
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y libpng-dev libjpeg62-turbo-dev libfreetype6-dev zip git libxml2-dev && \
-    docker-php-ext-configure gd --with-freetype --with-jpeg && \
-    docker-php-ext-install gd pdo pdo_mysql && \
-    docker-php-ext-enable gd
+RUN apt-get update && apt-get install -y \
+    git unzip zip libpng-dev libjpeg-dev libfreetype6-dev libonig-dev libxml2-dev
 
-# Install Composer (the PHP dependency manager)
+RUN docker-php-ext-configure gd --with-freetype --with-jpeg && \
+    docker-php-ext-install pdo pdo_mysql gd mbstring exif pcntl bcmath
+
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Copy the application files into the container
 COPY . .
 
-# Install PHP dependencies (composer)
-RUN composer install --no-dev --optimize-autoloader --no-scripts
+RUN composer install --no-dev --optimize-autoloader --no-interaction
 
-# Expose the application on port 8080
 EXPOSE 8080
 
-# Command to run when the container starts
-CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8080"]
+CMD php artisan serve --host=0.0.0.0 --port=8080
